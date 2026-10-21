@@ -123,7 +123,8 @@ let ratingQueue=Promise.resolve();
 function saveMine(stars, notes, okMsg){
   S.ratings={...S.ratings,[S.uid]:{stars, notes}};
   render();
-  const body={stars, notes, updatedAt:Date.now()};
+  // notes is only sent when there is at least one, so plain ratings work even before the rules allow notes
+  const body=Object.keys(notes).length ? {stars, notes, updatedAt:Date.now()} : {stars, updatedAt:Date.now()};
   ratingQueue=ratingQueue.then(()=>safe(()=>setDoc(doc(db,"ratings",S.uid),body), okMsg));
 }
 function setRating(dishId, stars){
