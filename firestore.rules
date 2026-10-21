@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function registered() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(uid()));
+    }
+    // Generous limits: the app enforces the real ones; these only block abuse.
+    function str(v, minLen, maxLen) { return v is string && v.size() >= minLen && v.size() <= maxLen; }
+    function claimedBy(lower, who) {
+      return getAfter(/databases/$(database)/documents/usernames/$(lower)).data.uid == who;
+    }
+
+    // Unique usernames: one document per lowercase username, pointing at its owner.
+    // Readable without sign-in so registration can check availability.
+    match /usernames/{name} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == uid()
+        && name.size() >= 3 && name.size() <= 60
+        && name == name.lower();
+      allow delete: if signedIn() && resource.data.uid == uid();
+      allow update: if false;
+    }
+
+    // Profiles: username, groups. Each person writes only their own.
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && uid() == userId
+        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'groups', 'joinedAt'])
+        && str(request.resource.data.username, 3, 60)
+        && request.resource.data.usernameLower == request.resource.data.username.lower()
+        && claimedBy(request.resource.data.usernameLower, userId)
+        && request.resource.data.groups is list
+        && request.resource.data.groups.size() <= 30;
+      allow delete: if false;
+    }
+
+    // Groups: anyone registered can create one; nobody edits or deletes them.
+    match /groups/{code} {
+      allow read: if signedIn();
+      allow create: if registered()
+        && code.matches('^[A-HJ-NP-Z2-9]{6}$')
+        && request.resource.data.keys().hasOnly(['name', 'createdBy', 'createdAt'])
+        && str(request.resource.data.name, 2, 120)
+        && request.resource.data.createdBy == uid();
+      allow update, delete: if false;
+    }
+
+    match /restaurants/{id} {
+      allow read: if signedIn();
+      allow create: if registered()
+        && request.resource.data.keys().hasOnly(['name', 'category', 'city', 'kosher', 'createdBy', 'createdAt'])
+        && str(request.resource.data.name, 1, 240)
+        && str(request.resource.data.category, 1, 120)
+        && str(request.resource.data.city, 1, 160)
+        && request.resource.data.kosher is bool
+        && request.resource.data.createdBy == uid();
+      // Anyone registered may correct the kosher flag, nothing else.
+      allow update: if registered()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kosher'])
+        && request.resource.data.kosher is bool;
+      allow delete: if signedIn() && resource.data.createdBy == uid();
+    }
+
+    match /dishes/{id} {
+      allow read: if signedIn();
+      allow create: if registered()
+        && request.resource.data.keys().hasOnly(['restaurantId', 'name', 'createdBy', 'createdAt'])
+        && str(request.resource.data.name, 1, 240)
+        && exists(/databases/$(database)/documents/restaurants/$(request.resource.data.restaurantId))
+        && request.resource.data.createdBy == uid();
+      // The dish's creator, or the restaurant's creator (when deleting the whole restaurant).
+      allow delete: if signedIn() && (
+        resource.data.createdBy == uid()
+        || get(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)).data.createdBy == uid()
+      );
+      allow update: if false;
+    }
+
+    // One document per person: { stars: { dishId: 1..5 }, notes: { dishId: text }, updatedAt }
+    match /ratings/{userId} {
+      allow read: if signedIn();
+      allow write: if registered() && uid() == userId
+        && request.resource.data.keys().hasOnly(['stars', 'notes', 'updatedAt'])
+        && request.resource.data.stars is map
+        && (!('notes' in request.resource.data) || request.resource.data.notes is map);
+    }
+  }
+}
