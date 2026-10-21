@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><radialGradient id="bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#B23358"/><stop offset="1" stop-color="#8A1F3E"/></radialGradient></defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<circle cx="256" cy="268" r="150" fill="#000" opacity=".14"/>
+<circle cx="256" cy="262" r="150" fill="#F7EFE6"/>
+<circle cx="256" cy="262" r="114" fill="none" stroke="#E6D8CA" stroke-width="5"/>
+<polygon points="256.0,192.0 273.0,238.5 322.6,240.4 283.6,271.0 297.1,318.6 256.0,291.0 214.9,318.6 228.4,271.0 189.4,240.4 239.0,238.5" fill="#E8A33D" stroke="#D08A22" stroke-width="4" stroke-linejoin="round"/>
+<g fill="#F7EFE6">
+  <rect x="58" y="96" width="9" height="92" rx="4.5"/><rect x="73" y="96" width="9" height="92" rx="4.5"/>
+  <rect x="88" y="96" width="9" height="92" rx="4.5"/><rect x="103" y="96" width="9" height="92" rx="4.5"/>
+  <path d="M56 176 H114 V196 C114 222 98 236 93 244 H77 C72 236 56 222 56 196 Z"/>
+  <rect x="74" y="236" width="22" height="190" rx="11"/>
+  <path d="M416 92 C452 108 462 196 450 266 H416 Z"/>
+  <rect x="414" y="256" width="24" height="170" rx="12"/>
+</g>
+</svg>
