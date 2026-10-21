@@ -1,5 +1,7 @@
 # Where2Eat
 
+האתר: https://where2eat-reciply-app.vercel.app
+
 אתר לדירוג מנות במסעדות, עם קבוצות חברים והגרלת מקום לאכול.
 אתר סטטי (HTML ו־JavaScript, בלי שלב build), עם Firebase Authentication ו־Firestore, ופריסה ב־Vercel.
 
